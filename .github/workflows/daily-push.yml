@@ -22,7 +22,4 @@ jobs:
       - name: run pushplus
         env:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        run: |
-          python pushplus_notify.py \
-            "校招雷达·日报 $(date +%Y-%m-%d)" \
-            "云端链路验证：GitHub Actions $(date '+%Y-%m-%d %H:%M:%S') UTC 推送成功。本机 Windows 关机后此 workflow 仍会按 cron 触发。"
+        run: python daily_report.py
