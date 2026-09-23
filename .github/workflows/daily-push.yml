@@ -1,0 +1,28 @@
+name: daily-push
+
+on:
+  # 每天北京时间 9:00（UTC 1:00）跑
+  schedule:
+    - cron: '0 1 * * *'
+  # 手动触发（workflow_dispatch）
+  workflow_dispatch:
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: run pushplus
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          python pushplus_notify.py \
+            "校招雷达·日报 $(date +%Y-%m-%d)" \
+            "云端链路验证：GitHub Actions $(date '+%Y-%m-%d %H:%M:%S') UTC 推送成功。本机 Windows 关机后此 workflow 仍会按 cron 触发。"
