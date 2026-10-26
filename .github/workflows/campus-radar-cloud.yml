@@ -1,0 +1,57 @@
+name: campus-radar-cloud
+
+# 【已停用定时】2026-10-27 起云端推送整体取消，原因：
+# 1. 聪哥明确要求「把 GitHub 上的校招取消」，GitHub 侧不再承担任何自动推送；
+# 2. collector.py 生成的报告约 63 KB，远超 PushPlus 单条 2 万字上限，
+#    即使定时触发也只会以 code=999「发送内容过大」失败（实测 2026-10-12 起连续失败 15 天）；
+# 3. 校招雷达的唯一有效通道是本机 WorkBuddy 自动化 automation-campus-morning-radar
+#    （每日 08:30，路径 ~/.workbuddy/automations/campus-morning-radar/run_campus_radar.py）。
+# 现改为仅保留手动触发，供临时核查用。
+#
+# 若将来要恢复云端推送，必须先解决 PushPlus 长度限制（截断或改为摘要+链接）。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装依赖
+        run: pip install --quiet pyyaml
+
+      # 云端容器每次全新，账本必须持久化，否则每次都当成"全部新增"，去重失效
+      - name: 恢复账本缓存
+        uses: actions/cache@v4
+        with:
+          path: data/ledger.json
+          key: campus-ledger-${{ github.run_id }}
+          restore-keys: |
+            campus-ledger-
+
+      - name: 运行真采集并推送
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          python collector.py --push --pages 2
+          echo "=== 产物 ==="
+          ls -la data/ output/ 2>/dev/null || true
+
+      # 无论成功失败都留档，便于排查"推了但内容不对"
+      - name: 上传报告与原始档
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: campus-radar-${{ github.run_number }}
+          path: |
+            output/
+            data/
+          retention-days: 14

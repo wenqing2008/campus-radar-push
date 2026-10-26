@@ -1,3 +1,14 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# 运行产物（云端每次重新生成，不入库）
+data/
+output/
+
+# 本地 token：云端走 secrets.PUSHPLUS_TOKEN，绝不入库
+pushplus_token.txt
+.env
+
+# 远端备份（2026-10-27 停用云端推送时留存，含 git bundle）
+remote_backup_*/
